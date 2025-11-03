@@ -1,4 +1,4 @@
-# Shared SDK (`@sameer/shared`)
+# Shared SDK
 
 ## Overview
 
@@ -20,7 +20,7 @@ This SDK is designed to be:
 
 ## Table of Contents
 
-- [Shared SDK (`@sameer/shared`)](#shared-sdk-sameershared)
+- [Shared SDK](#shared-sdk)
   - [Overview](#overview)
   - [Table of Contents](#table-of-contents)
   - [Architecture](#architecture)
