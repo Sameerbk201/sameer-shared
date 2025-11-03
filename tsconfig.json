@@ -27,7 +27,7 @@
 
     /* Output */
     "outDir": "dist",
-    "rootDir": ".",
+    "rootDir": "src",
     "sourceMap": true,
     "declaration": true, // <— generate .d.ts files
     "declarationMap": true, // <— include source maps for types
@@ -36,6 +36,6 @@
     "isolatedModules": true,
     "noEmit": false
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests/**/*.ts"]
 }
