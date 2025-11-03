@@ -1,0 +1,6 @@
+# .npmignore
+src
+tsconfig.json
+node_modules
+.vscode
+/*.tgz
