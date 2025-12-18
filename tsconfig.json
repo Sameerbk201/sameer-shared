@@ -22,7 +22,7 @@
     "noUncheckedIndexedAccess": true,
 
     /* Node.js specific */
-    "types": ["node"],
+    "types": ["node", "vitest/globals"],
     "resolveJsonModule": true,
 
     /* Output */

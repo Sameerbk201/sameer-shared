@@ -1,13 +1,15 @@
 import '../configs/load-env.js';
 import pino, { type Logger, type LoggerOptions, stdTimeFunctions } from 'pino';
 import { createRequire } from 'module';
+import path from 'node:path';
+import type { TransportTargetOptions } from 'pino';
 const require = createRequire(import.meta.url);
 /**
  * @file Logger
  * @module logger
  *
  * @description
- * High-performance, production-only structured logger for all Truehear Cloud services.
+ * High-performance, production-only structured logger for all sameer Cloud services.
  *
  * ---
  * ## Key Capabilities
@@ -32,7 +34,7 @@ const require = createRequire(import.meta.url);
  * ## Usage Examples
  *
  * ```ts
- * import { logger, createLogger } from '@truehear/shared';
+ * import { logger, createLogger } from '@sameer/shared';
  *
  * 1 Basic logging
  * logger.info('Service started');
@@ -99,20 +101,14 @@ const options: LoggerOptions = {
   timestamp: stdTimeFunctions.isoTime,
   redact: redact,
   formatters: {
-    // Add standard fields or normalize levels
-    level(label, number) {
-      return { level: label.toUpperCase(), levelNumber: number };
-    },
     bindings(bindings) {
-      // Include host, service, and pid if relevant
       return {
         host: bindings.hostname,
         pid: bindings.pid,
-        service: process.env.SERVICE_NAME ?? 'truehear-service',
+        service: process.env.SERVICE_NAME ?? 'sameer-service',
       };
     },
     log(object) {
-      // Custom transform — ensure metadata consistency
       if (object.err instanceof Error) {
         object.errorMessage = object.err.message;
         object.errorStack = object.err.stack;
@@ -133,31 +129,64 @@ const options: LoggerOptions = {
 /* -----------------------------------------------------------------------------
  * Logger Initialization
  * ---------------------------------------------------------------------------*/
-
+const logFilePath = process.env.LOG_FILE_PATH;
 const isDev = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'dev';
+
+//                 ┌──► stdout
+// logger ──► transport
+//                 └──► file.log
 
 /**
  * Singleton logger for all services.
  * Pretty-prints only in dev, falls back silently if `pino-pretty` is missing.
  */
-let transport: LoggerOptions['transport'] | undefined = undefined;
+let transport: LoggerOptions['transport'] | undefined;
+
+const targets: TransportTargetOptions[] = [];
+
 if (isDev) {
   try {
-    // Dynamically require pino-pretty to avoid breaking if not installed
     require.resolve('pino-pretty');
 
-    transport = {
+    // Dev: pretty console output
+    targets.push({
       target: 'pino-pretty',
       options: {
         colorize: true,
         translateTime: 'SYS:standard',
         ignore: 'pid,hostname,levelNumber',
       },
-    };
+    });
   } catch {
-    // Skip pretty printing if pino-pretty is not available
-    console.warn('[logger] pino-pretty not found — falling back to JSON logs.');
+    // Dev fallback: JSON to stdout
+    targets.push({
+      target: 'pino/file',
+      options: { destination: 1 },
+    });
   }
+} else {
+  // Prod: JSON to stdout
+  targets.push({
+    target: 'pino/file',
+    options: { destination: 1 },
+  });
+}
+
+/**
+ * Optional file logging
+ */
+if (logFilePath) {
+  targets.push({
+    target: 'pino/file',
+    options: {
+      destination: path.resolve(logFilePath),
+      mkdir: true,
+    },
+  });
+}
+
+if (targets.length > 0) {
+  transport = { targets };
 }
 
 /**
@@ -192,7 +221,7 @@ export const logger: Logger = pino({
  *
  * @example
  * ```ts
- * import { createLogger } from '@truehear/shared';
+ * import { createLogger } from '@sameer/shared';
  * const dbLogger = createLogger({ module: 'database', connection: 'primary' });
  * dbLogger.debug('Connected successfully');
  * ```
