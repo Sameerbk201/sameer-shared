@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+
 import { EncryptionService } from '../../services/encryption.service.js';
 
 /**

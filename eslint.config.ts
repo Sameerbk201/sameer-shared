@@ -1,15 +1,25 @@
 import js from '@eslint/js';
+import { defineConfig } from 'eslint/config';
+import prettier from 'eslint-config-prettier';
+import pluginImport from 'eslint-plugin-import';
+import eslintPluginPrettier from 'eslint-plugin-prettier';
+import vitest from 'eslint-plugin-vitest';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import prettier from 'eslint-config-prettier';
-import eslintPluginPrettier from 'eslint-plugin-prettier';
-import pluginImport from 'eslint-plugin-import';
-import { defineConfig } from 'eslint/config';
-
 export default defineConfig([
-  { ignores: ['dist/**', 'node_modules/**', '*.config.cjs', '*.config.js', 'src/tests/**/*.cjs'] },
+  // --------------------------------------------------
+  // Ignore build & config artifacts
+  // --------------------------------------------------
+  {
+    ignores: ['dist/**', 'node_modules/**', '*.config.cjs', '*.config.js', 'src/tests/**/*.cjs'],
+  },
+
+  // --------------------------------------------------
+  // Base config for JS + TS
+  // --------------------------------------------------
   {
     files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
+
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -20,61 +30,63 @@ export default defineConfig([
       globals: {
         ...globals.node,
         ...globals.jest,
-        ...globals.browser,
       },
     },
+
     plugins: {
       'prettier': eslintPluginPrettier,
       '@typescript-eslint': tseslint.plugin,
       'import': pluginImport,
     },
+
     extends: [
-      js.configs.recommended, // ESLint recommended
-      ...tseslint.configs.recommended, // TypeScript recommended
-      prettier, // Prettier last
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      prettier, // MUST be last
     ],
-    // Teach eslint-plugin-import how to resolve TS path aliases
+
     settings: {
       'import/resolver': {
-        typescript: { project: './tsconfig.json' },
+        typescript: {
+          project: './tsconfig.json',
+        },
       },
     },
 
     rules: {
-      // Require extensions for real JS files, but NOT for TS or packages/aliases
-      // 'import/extensions': [
-      //   'warn',
-      //   'ignorePackages',
-      //   {
-      //     js: 'always',
-      //     mjs: 'always',
-      //     cjs: 'always',
-      //     ts: 'never',
-      //     tsx: 'never',
-      //     mts: 'never',
-      //     cts: 'never',
-      //   },
-      // keep this only for JS via an override below
-      'import/extensions': 'off',
-      // ],
-      // Avoid false positives with TS paths
-      'import/no-unresolved': 'off',
-      // Let the TS resolver handle this instead of guessing
-      // 'import/no-unresolved': 'off',
-      // If you also use eslint-plugin-n, turn this off so it doesn't fight:
-      // 'n/file-extension-in-import': 'off',
-
-      // Prettier integration
+      // --------------------------------------------------
+      // Prettier
+      // --------------------------------------------------
       'prettier/prettier': ['warn', { endOfLine: 'lf', singleQuote: true }],
 
-      // Style preferences
+      // --------------------------------------------------
+      // Imports
+      // --------------------------------------------------
+      'import/extensions': 'off',
+      'import/no-unresolved': 'off',
+      'import/no-duplicates': 'warn',
+      'import/order': [
+        'warn',
+        {
+          'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          'newlines-between': 'always',
+          'alphabetize': { order: 'asc', caseInsensitive: true },
+        },
+      ],
+
+      // --------------------------------------------------
+      // Style & consistency
+      // --------------------------------------------------
       'semi': ['warn', 'always'],
       'comma-dangle': ['warn', 'only-multiline'],
       'object-curly-spacing': ['warn', 'always'],
-
-      // Best practices
       'eqeqeq': ['warn', 'always'],
-      'no-console': 'off', // allow console logs for backend
+      'prefer-const': 'warn',
+      'no-var': 'warn',
+
+      // --------------------------------------------------
+      // TypeScript safety
+      // --------------------------------------------------
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -83,29 +95,88 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-expressions': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
 
-      'prefer-const': 'warn',
-      'no-var': 'warn',
+      // --------------------------------------------------
+      // Shadowing (TS-aware)
+      // --------------------------------------------------
+      'no-shadow': 'off',
+      '@typescript-eslint/no-shadow': 'warn',
 
-      // Node.js specifics
-      'callback-return': 'warn',
+      // --------------------------------------------------
+      // Node / Express
+      // --------------------------------------------------
+      'no-console': 'off',
       'handle-callback-err': ['warn', '^err'],
       'no-path-concat': 'warn',
 
-      // Optional strictness
+      // --------------------------------------------------
+      // General safety
+      // --------------------------------------------------
       'no-empty-function': 'warn',
-      'no-shadow': 'warn',
+      'no-throw-literal': 'error',
+      'prefer-promise-reject-errors': 'error',
+      // --------------------------------------------------
+      // Async & Promise correctness
+      // --------------------------------------------------
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
+      '@typescript-eslint/await-thenable': 'error',
     },
   },
-  // JS-only: require extensions for relative JS imports
+
+  // --------------------------------------------------
+  // JS-only override: require extensions
+  // --------------------------------------------------
   {
     files: ['**/*.{js,mjs,cjs}'],
     rules: {
       'import/extensions': [
         'warn',
         'ignorePackages',
-        { js: 'always', mjs: 'always', cjs: 'always' },
+        {
+          js: 'always',
+          mjs: 'always',
+          cjs: 'always',
+        },
       ],
+    },
+  },
+
+  // --------------------------------------------------
+  // Test files (Vitest)
+  // --------------------------------------------------
+  {
+    files: ['**/*.test.ts', '**/*.spec.ts', '**/*.test.tsx', '**/*.spec.tsx', 'src/tests/**/*'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        ...globals.vitest,
+      },
+    },
+    extends: ['plugin:vitest/recommended'],
+
+    rules: {
+      // Tests are allowed to be more flexible
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+
+      // Async helpers often return void in tests
+      '@typescript-eslint/no-floating-promises': 'off',
+
+      'vitest/no-disabled-tests': 'warn',
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-identical-title': 'error',
     },
   },
 ]);

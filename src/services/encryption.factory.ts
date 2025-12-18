@@ -14,9 +14,10 @@
  */
 
 import configs from '../configs/configs.js';
+import { logger } from '../logger/logger.js';
+
 import { EncryptionService } from './encryption.service.js';
 import type { EncryptionServiceOptions } from './encryption.service.js';
-import { logger } from '../logger/logger.js';
 
 /**
  * Internal singleton reference.

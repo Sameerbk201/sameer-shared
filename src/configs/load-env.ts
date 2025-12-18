@@ -1,6 +1,7 @@
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+import dotenv from 'dotenv';
 
 /**
  * @file load-env.ts
@@ -22,6 +23,6 @@ dotenv.config({ path: envPath });
 export const ENV = {
   NODE_ENV: process.env.NODE_ENV ?? 'production',
   LOG_LEVEL: process.env.LOG_LEVEL ?? 'info',
-  SERVICE_NAME: process.env.SERVICE_NAME ?? 'truehear-service',
+  SERVICE_NAME: process.env.SERVICE_NAME ?? 'service',
   LOG_REDACT_KEYS: process.env.LOG_REDACT_KEYS ?? '',
 };

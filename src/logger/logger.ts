@@ -1,8 +1,10 @@
 import '../configs/load-env.js';
-import pino, { type Logger, type LoggerOptions, stdTimeFunctions } from 'pino';
 import { createRequire } from 'module';
 import path from 'node:path';
-import type { TransportTargetOptions } from 'pino';
+
+import pino, { stdTimeFunctions } from 'pino';
+import type { TransportTargetOptions, Logger, LoggerOptions } from 'pino';
+
 const require = createRequire(import.meta.url);
 /**
  * @file Logger
@@ -101,7 +103,7 @@ const options: LoggerOptions = {
   timestamp: stdTimeFunctions.isoTime,
   redact: redact,
   formatters: {
-    bindings(bindings) {
+    bindings(bindings: { pid?: number; hostname?: string }) {
       return {
         host: bindings.hostname,
         pid: bindings.pid,
